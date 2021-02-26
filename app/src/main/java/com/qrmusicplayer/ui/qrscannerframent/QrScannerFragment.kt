@@ -63,14 +63,8 @@ class QrScannerFragment : Fragment() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        val cameraAccepted = grantResults[0] === PackageManager.PERMISSION_GRANTED
-        val storageAccepted = grantResults[1] === PackageManager.PERMISSION_GRANTED
-
         if(requestCode==REQUEST_CODE_PERMISSIONS && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
         {
-            Log.v("Permission", "requestCode"+ requestCode)
-            Log.v("Permission", "cameraAccepted"+ cameraAccepted)
-            Log.v("Permission", "storageAccepted"+ storageAccepted)
             startCamera()
         }
     }
@@ -147,7 +141,6 @@ class QrScannerFragment : Fragment() {
         cameraExecutor.shutdown()
         super.onDestroy()
     }
-
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(

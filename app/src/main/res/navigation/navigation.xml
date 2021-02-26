@@ -19,11 +19,10 @@
         android:id="@+id/musicListFragment"
         android:name="com.qrmusicplayer.ui.musiclist.MusicListFragment"
         android:label="fragment_music_list"
-        tools:layout="@layout/fragment_music_list"
-
-        >
+        tools:layout="@layout/fragment_music_list">
         <argument
             android:name="url"
             app:argType="string" />
+
     </fragment>
 </navigation>

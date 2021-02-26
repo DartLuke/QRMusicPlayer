@@ -23,52 +23,58 @@ class MusicListModel : ViewModel() {
     lateinit var _musicList: MutableList<Music>
     val errorMessage = MutableLiveData<String>()
     val isLoading = MutableLiveData<Boolean>(false)
-    var musicList= MutableLiveData<List<Music>>()
- //   val jsonDownloaded = MutableLiveData<Boolean>()
+    var musicList = MutableLiveData<List<Music>>()
+
+    //   val jsonDownloaded = MutableLiveData<Boolean>()
     fun getJson(url: String) {
-     isLoading.value=true
+        isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _musicList = RetrofitBuilder.api.getJson(url) as MutableList<Music>
                 Log.v("Test", _musicList.toString())
-             //   jsonDownloaded.postValue(true)
+                //   jsonDownloaded.postValue(true)
                 downloadFile()
             } catch (exp: Exception) {
                 errorMessage.postValue("Error: $errorMessage")
-                isLoading.value=false
-              Log.e("Test", exp.message)
+                isLoading.value = false
+                Log.e("Test", exp.message)
             }
         }
 
     }
 
-   private fun downloadFile() {
+    private fun downloadFile() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Log.v("Test", "Start to download")
-                for ( i in _musicList.indices.reversed()) {
-               // val iterator = _musicList.iterator()
-                  //  while (iterator.hasNext()){
-                    //    val i=iterator.next()
-                    // val body = RetrofitBuilder.apiDownload.downloadFile(musicList[i].url).body()
+                var setCountries: MutableSet<String> = mutableSetOf()
 
+                Log.v("Test", "Start to download")
+                for (i in _musicList.indices.reversed()) {
+                    val fileName = _musicList[i].url.substringAfterLast("/")
+                    if (setCountries.contains(fileName)) {
+                        //don't download file with same name
+                        _musicList.removeAt(i)
+                        continue
+                    }
+                    setCountries.add(fileName)
                     val response = RetrofitBuilder.apiDownload.downloadFile(_musicList[i].url)
                     var body = response.body()
-                    Log.v("Test", "Response is " + response.code().toString() + "for " + _musicList[i].name)
+                    Log.v(
+                        "Test",
+                        "Response is " + response.code().toString() + "for " + _musicList[i].name
+                    )
                     if (
-                        response.code()==200 &&
+                        response.code() == 200 &&
                         body != null
                     ) {
                         Log.v("Test", "Start to write file ")
                         writeFile(body, i)
-                    }
-                    else
-                    {
+                    } else {
                         _musicList.removeAt(i)
 
                     }
                 }
-                Log.v("Test","****DownLoad is finished***")
+                Log.v("Test", "****DownLoad is finished***")
                 isLoading.postValue(false)
                 musicList.postValue(_musicList)
             } catch (exp: Exception) {
@@ -89,7 +95,7 @@ class MusicListModel : ViewModel() {
         }"
 
         val pathName =
-            Environment.getExternalStorageDirectory().path + "/download/" + _musicList[i].name +"_"+ fileName
+            Environment.getExternalStorageDirectory().path + "/download/" + _musicList[i].name + "_" + fileName
 
 
         val file = File(pathName)
@@ -102,16 +108,16 @@ class MusicListModel : ViewModel() {
             outputStream = file.outputStream()
 
             //Total file length
-           // val contentLength = responseBody.contentLength()
+            // val contentLength = responseBody.contentLength()
             //Currently downloaded length
-          //  var currentLength = 0L
+            //  var currentLength = 0L
 
             val buff = ByteArray(1024)
             var len = inputStream.read(buff)
-           // var percent = 0L
+            // var percent = 0L
             while (len != -1) {
                 outputStream.write(buff, 0, len)
-               // currentLength += len
+                // currentLength += len
 //
 //                if ((currentLength * 100 / contentLength).toInt() > percent) {
 //                    percent = 100 * (currentLength / contentLength)
@@ -124,7 +130,7 @@ class MusicListModel : ViewModel() {
 
             }
             _musicList[i].pathway = pathName
-            _musicList[i].fileName=fileName
+            _musicList[i].fileName = fileName
         } catch (exp: Exception) {
             errorMessage.postValue("Error: $errorMessage")
             Log.e("Test", exp.message)
@@ -136,22 +142,19 @@ class MusicListModel : ViewModel() {
 
     }
 
-    fun playMusic(music: Music)
-    {
-         var player: MediaPlayer
-        val  mediaPlayer = MediaPlayer().apply {
+    fun playMusic(music: Music) {
+        var player: MediaPlayer
+        val mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .build()
             )
-        //    setDataSource(applicationContext, music.pathway.toUri())
+            //    setDataSource(applicationContext, music.pathway.toUri())
             prepare()
             start()
         }
-
-
 
 
     }

@@ -14,12 +14,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 import okhttp3.ResponseBody
+import retrofit2.http.HTTP
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
 class MusicListModel : ViewModel() {
-    lateinit var _musicList: List<Music>
+    lateinit var _musicList: MutableList<Music>
     val errorMessage = MutableLiveData<String>()
     val isLoading = MutableLiveData<Boolean>(false)
     var musicList= MutableLiveData<List<Music>>()
@@ -28,7 +29,7 @@ class MusicListModel : ViewModel() {
      isLoading.value=true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                _musicList = RetrofitBuilder.api.getJson(url)
+                _musicList = RetrofitBuilder.api.getJson(url) as MutableList<Music>
                 Log.v("Test", _musicList.toString())
              //   jsonDownloaded.postValue(true)
                 downloadFile()
@@ -45,17 +46,26 @@ class MusicListModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 Log.v("Test", "Start to download")
-                for (i in _musicList.indices) {
+                for ( i in _musicList.indices.reversed()) {
+               // val iterator = _musicList.iterator()
+                  //  while (iterator.hasNext()){
+                    //    val i=iterator.next()
                     // val body = RetrofitBuilder.apiDownload.downloadFile(musicList[i].url).body()
 
                     val response = RetrofitBuilder.apiDownload.downloadFile(_musicList[i].url)
                     var body = response.body()
+                    Log.v("Test", "Response is " + response.code().toString() + "for " + _musicList[i].name)
                     if (
-                        response.isSuccessful &&
+                        response.code()==200 &&
                         body != null
                     ) {
                         Log.v("Test", "Start to write file ")
                         writeFile(body, i)
+                    }
+                    else
+                    {
+                        _musicList.removeAt(i)
+
                     }
                 }
                 Log.v("Test","****DownLoad is finished***")

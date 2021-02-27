@@ -9,8 +9,8 @@ data class Music(
     @SerializedName("url") val url: String,
     var pathway:String,
     var fileName:String,
-    var isPlaying:Boolean
-
+    var isPlaying:Boolean,
+    var isLoading:Boolean
 ){
-    constructor() : this(0,"","","","",false)
+    constructor() : this(0,"","","","",false, false)
 }

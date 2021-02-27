@@ -1,31 +1,28 @@
 package com.qrmusicplayer.ui.musiclist
 
 import android.app.Application
-import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qrmusicplayer.api.RetrofitBuilder
 import com.qrmusicplayer.model.Music
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 import okhttp3.ResponseBody
-import retrofit2.http.HTTP
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
-class MusicListModel(application: Application) : AndroidViewModel(application) {
+class MusicListViewModel(application: Application) : AndroidViewModel(application) {
     lateinit var _musicList: MutableList<Music>
     val errorMessage = MutableLiveData<String>()
     val isLoading = MutableLiveData<Boolean>()
     var musicList = MutableLiveData<List<Music>>()
+
 
     private val context = getApplication<Application>().applicationContext
     private var mediaPlayer: MediaPlayer = MediaPlayer()
@@ -36,61 +33,73 @@ class MusicListModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _musicList = RetrofitBuilder.api.getJson(url) as MutableList<Music>
-                Log.v("Test", _musicList.toString())
-                //   jsonDownloaded.postValue(true)
-                downloadFile()
+                isLoading.postValue(false)
+                downloadAllFiles()
             } catch (exp: Exception) {
+                isLoading.postValue(false)
                 errorMessage.postValue("Error: $errorMessage")
-                isLoading.value = false
                 Log.e("Test", exp.message)
             }
         }
+    }
+
+    private fun downloadAllFiles() {
+        cleanFromDublicates()
+        viewModelScope.launch(Dispatchers.IO) {
+            coroutineScope {
+                try {
+                    //  var setCountries: MutableSet<String> = mutableSetOf()
+                    var list: MutableList<Deferred<Unit>> = mutableListOf()
+                    Log.v("Test", "Start to download")
+                    for (i in _musicList.indices) {
+                        list.add(async {
+                            _musicList[i].isLoading = true
+                            musicList.postValue(_musicList)
+                            downloadfile(i)
+                            _musicList[i].isLoading = false
+                            musicList.postValue(_musicList)
+                        })
+                    }
+                    list.awaitAll()
+                    Log.v("Test", "****DownLoad is finished***")
+                    isLoading.postValue(false)
+                    cleanList()
+                    musicList.postValue(_musicList)
+                } catch (exp: Exception) {
+                    errorMessage.postValue("Error: $errorMessage")
+                    isLoading.postValue(false)
+                    Log.e("Test", exp.message)
+                }
+            }
+        }
+    }
+
+    private fun cleanList() {
+        _musicList =
+            _musicList.filter { it.fileName.isNotEmpty() } as MutableList<Music>
 
     }
 
-    private fun downloadFile() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                var setCountries: MutableSet<String> = mutableSetOf()
+    private suspend fun downloadfile(i: Int) {
+        musicList.postValue(_musicList)
+        val response = RetrofitBuilder.apiDownload.downloadFile(_musicList[i].url)
+        var body = response.body()
+        Log.v("Test", "Response is " + response.code().toString() + "for " + _musicList[i].name)
+        if (response.code() == 200 && body != null)
+            writeFile(body, i)
 
-                Log.v("Test", "Start to download")
-                for (i in _musicList.indices.reversed()) {
-                    val fileName = _musicList[i].url.substringAfterLast("/")
-                    if (setCountries.contains(fileName)) {
-                        //don't download file with same name
-                        _musicList.removeAt(i)
-                        continue
-                    }
-                    setCountries.add(fileName)
-                    val response = RetrofitBuilder.apiDownload.downloadFile(_musicList[i].url)
-                    var body = response.body()
-                    Log.v(
-                        "Test",
-                        "Response is " + response.code().toString() + "for " + _musicList[i].name
-                    )
-                    if (
-                        response.code() == 200 &&
-                        body != null
-                    ) {
-                        Log.v("Test", "Start to write file ")
-                        writeFile(body, i)
-                    } else {
-                        _musicList.removeAt(i)
 
-                    }
-                }
-                Log.v("Test", "****DownLoad is finished***")
-                isLoading.postValue(false)
-                musicList.postValue(_musicList)
-            } catch (exp: Exception) {
-                errorMessage.postValue("Error: $errorMessage")
-                isLoading.postValue(false)
-                Log.e("Test", exp.message)
-            }
-        }
+    }
+
+    private fun cleanFromDublicates() {
+        var setCountries: MutableSet<String> = mutableSetOf()
+        _musicList =
+            _musicList.filter { setCountries.add(it.url.substringAfterLast("/")) } as MutableList<Music>
+        Log.v("Test", _musicList.toString())
     }
 
     private fun writeFile(responseBody: ResponseBody, i: Int) {
+        Log.v("Test", "Started to write file")
         val fileName = _musicList[i].url.substringAfterLast("/")
         val pathName =
             Environment.getExternalStorageDirectory().path + "/download/" + fileName

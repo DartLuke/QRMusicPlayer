@@ -1,6 +1,5 @@
 package com.qrmusicplayer.ui.musiclist
 
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -16,13 +15,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.qrmusicplayer.R
 import com.qrmusicplayer.model.Music
 import com.qrmusicplayer.ui.adapter.MusicAdapter
-import com.qrmusicplayer.ui.qrscannerframent.QrScanerViewModel
 import kotlinx.android.synthetic.main.fragment_music_list.*
 import kotlinx.android.synthetic.main.fragment_music_list.view.*
 
 
 class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
-    private lateinit var viewModel: MusicListModel
+    private lateinit var viewModel: MusicListViewModel
     private lateinit var adapter: MusicAdapter
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -87,13 +85,12 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
     }
 
     private fun setupViewModel() {
-        viewModel = ViewModelProvider(this).get(MusicListModel::class.java)
+        viewModel = ViewModelProvider(this).get(MusicListViewModel::class.java)
     }
 
-    override fun onClickItem(music:Music) {
+    override fun onClickItem(music: Music) {
         adapter.notifyDataSetChanged()
-               viewModel.playMusic(music)
-
+        viewModel.playMusic(music)
 
 
     }

@@ -35,6 +35,10 @@ class MusicAdapter(
 
                 item_music_name.text = music.name
                 item_file_name.text = music.fileName
+
+                if(music.isLoading) item_progressBar.visibility=View.VISIBLE
+                else item_progressBar.visibility=View.GONE
+
                 if(music.isPlaying) item_imageView.visibility=View.VISIBLE
                 else item_imageView.visibility=View.GONE
 

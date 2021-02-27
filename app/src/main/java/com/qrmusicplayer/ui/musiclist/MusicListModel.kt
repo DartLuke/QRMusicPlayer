@@ -1,10 +1,12 @@
 package com.qrmusicplayer.ui.musiclist
 
+import android.app.Application
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,11 +21,14 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
-class MusicListModel : ViewModel() {
+class MusicListModel(application: Application) : AndroidViewModel(application) {
     lateinit var _musicList: MutableList<Music>
     val errorMessage = MutableLiveData<String>()
     val isLoading = MutableLiveData<Boolean>(false)
     var musicList = MutableLiveData<List<Music>>()
+
+    private val context = getApplication<Application>().applicationContext
+    private var mediaPlayer: MediaPlayer = MediaPlayer()
 
     //   val jsonDownloaded = MutableLiveData<Boolean>()
     fun getJson(url: String) {
@@ -143,21 +148,29 @@ class MusicListModel : ViewModel() {
     }
 
     fun playMusic(music: Music) {
-        var player: MediaPlayer
-        val mediaPlayer = MediaPlayer().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            //    setDataSource(applicationContext, music.pathway.toUri())
-            prepare()
-            start()
+
+        mediaPlayer.stop()
+        if (music.isPlaying) {
+            mediaPlayer = MediaPlayer.create(context, music.pathway.toUri())
+
+            mediaPlayer.start()
         }
-
-
     }
 
+    fun playMusic(trackNumber: Int) {
+
+        mediaPlayer.stop()
+        var music = musicList.value?.get(trackNumber)
+        if (music?.isPlaying == true) {
+
+            music.isPlaying = false
+        } else {
+            music?.isPlaying = true
+            mediaPlayer = MediaPlayer.create(context, music?.pathway?.toUri())
+
+            mediaPlayer.start()
+        }
+
+    }
 
 }

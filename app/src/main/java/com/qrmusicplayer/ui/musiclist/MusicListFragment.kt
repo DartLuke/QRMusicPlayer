@@ -90,7 +90,11 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
         viewModel = ViewModelProvider(this).get(MusicListModel::class.java)
     }
 
-    override fun onClickItem(music: Music) {
+    override fun onClickItem(music:Music) {
+        adapter.notifyDataSetChanged()
+               viewModel.playMusic(music)
+
+
 
     }
 

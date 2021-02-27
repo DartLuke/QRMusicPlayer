@@ -15,15 +15,25 @@ class MusicAdapter(
 ) :
     RecyclerView.Adapter<MusicAdapter.MyViewHolder>() {
     //private val musicSet:Set<>
-    private var sortByAreaDescent: Boolean = false
+   private var currentPlayingMusic:Music= Music()
 
-    class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(music: Music, onClickListener: OnClickListener) {
+    inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(music: Music, onClickListener: OnClickListener, position: Int) {
             itemView.apply {
+                itemView.setOnClickListener {
+                    if(music.isPlaying) {
+                        currentPlayingMusic.isPlaying = !currentPlayingMusic.isPlaying
+                        currentPlayingMusic = music
+                    }
+                    music.isPlaying=!music.isPlaying
+                    onClickListener.onClickItem(music)
+                }
+
                 item_music_name.text = music.name
                 item_file_name.text = music.fileName
+                if(music.isPlaying) item_imageView.visibility=View.VISIBLE
+                else item_imageView.visibility=View.GONE
 
-                itemView.setOnClickListener { onClickListener.onClickItem(music) }
             }
         }
     }
@@ -33,7 +43,7 @@ class MusicAdapter(
 
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        holder.bind(musicList[position], onClickListener)
+        holder.bind(musicList[position], onClickListener, position)
     }
 
     override fun getItemCount(): Int = musicList.size

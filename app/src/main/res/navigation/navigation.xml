@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/qrScannerFragment">
+    app:startDestination="@id/startFragment">
 
     <fragment
         android:id="@+id/qrScannerFragment"
@@ -24,5 +24,17 @@
             android:name="url"
             app:argType="string" />
 
+    </fragment>
+    <fragment
+        android:id="@+id/startFragment"
+        android:name="com.qrmusicplayer.ui.startfragment.StartFragment"
+        android:label="fragment_start"
+        tools:layout="@layout/fragment_start" >
+        <action
+            android:id="@+id/action_startFragment_to_musicListFragment"
+            app:destination="@id/musicListFragment" />
+        <action
+            android:id="@+id/action_startFragment_to_qrScannerFragment"
+            app:destination="@id/qrScannerFragment" />
     </fragment>
 </navigation>

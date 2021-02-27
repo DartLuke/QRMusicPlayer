@@ -8,6 +8,7 @@ class QrScanerViewModel : ViewModel() {
      val navigation = MutableLiveData<NavDirections?>()
     fun openMusicList(url: String) {
      navigation.value=   QrScannerFragmentDirections.actionQrScannerFragmentToMusicListFragment(url)
+
     }
     fun navigationCompelete() {
         navigation.value = null

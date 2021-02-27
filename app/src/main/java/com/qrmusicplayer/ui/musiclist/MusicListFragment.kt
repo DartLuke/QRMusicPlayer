@@ -31,10 +31,9 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
         // Inflate the layout for this fragment
         var view = inflater.inflate(R.layout.fragment_music_list, container, false)
         setupViewModel()
-
         view = setupUI(view)
         setupObservers()
-        getJson()
+        if (savedInstanceState == null) getJson()
         return view
     }
 

@@ -24,7 +24,7 @@ import java.io.OutputStream
 class MusicListModel(application: Application) : AndroidViewModel(application) {
     lateinit var _musicList: MutableList<Music>
     val errorMessage = MutableLiveData<String>()
-    val isLoading = MutableLiveData<Boolean>(false)
+    val isLoading = MutableLiveData<Boolean>()
     var musicList = MutableLiveData<List<Music>>()
 
     private val context = getApplication<Application>().applicationContext
@@ -92,19 +92,11 @@ class MusicListModel(application: Application) : AndroidViewModel(application) {
 
     private fun writeFile(responseBody: ResponseBody, i: Int) {
         val fileName = _musicList[i].url.substringAfterLast("/")
-
-        val pathName1 = "${Environment.getExternalStorageDirectory().path}/download/${
-            fileName.substringAfterLast(
-                "/"
-            )
-        }"
-
         val pathName =
-            Environment.getExternalStorageDirectory().path + "/download/" + _musicList[i].name + "_" + fileName
+            Environment.getExternalStorageDirectory().path + "/download/" + fileName
 
 
         val file = File(pathName)
-
         file.createNewFile()
         var inputStream: InputStream? = null
         var outputStream: OutputStream? = null
@@ -157,20 +149,5 @@ class MusicListModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun playMusic(trackNumber: Int) {
-
-        mediaPlayer.stop()
-        var music = musicList.value?.get(trackNumber)
-        if (music?.isPlaying == true) {
-
-            music.isPlaying = false
-        } else {
-            music?.isPlaying = true
-            mediaPlayer = MediaPlayer.create(context, music?.pathway?.toUri())
-
-            mediaPlayer.start()
-        }
-
-    }
 
 }

@@ -23,11 +23,9 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
     val isLoading = MutableLiveData<Boolean>()
     var musicList = MutableLiveData<List<Music>>()
 
-
     private val context = getApplication<Application>().applicationContext
     private var mediaPlayer: MediaPlayer = MediaPlayer()
 
-    //   val jsonDownloaded = MutableLiveData<Boolean>()
     fun getJson(url: String) {
         isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
@@ -48,22 +46,17 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch(Dispatchers.IO) {
             coroutineScope {
                 try {
-                    //  var setCountries: MutableSet<String> = mutableSetOf()
                     var list: MutableList<Deferred<Unit>> = mutableListOf()
-                    Log.v("Test", "Start to download")
+                    Log.v("Test", "***Download started***")
                     for (i in _musicList.indices) {
                         list.add(async {
-                            _musicList[i].isLoading = true
-                            musicList.postValue(_musicList)
                             downloadfile(i)
-                            _musicList[i].isLoading = false
-                            musicList.postValue(_musicList)
                         })
                     }
                     list.awaitAll()
-                    Log.v("Test", "****DownLoad is finished***")
+                    Log.v("Test", "***Download complete***")
                     isLoading.postValue(false)
-                    cleanList()
+                    cleanListFromEmptyFiles()
                     musicList.postValue(_musicList)
                 } catch (exp: Exception) {
                     errorMessage.postValue("Error: $errorMessage")
@@ -74,32 +67,33 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    private fun cleanList() {
+    private fun cleanListFromEmptyFiles() {
         _musicList =
-            _musicList.filter { it.fileName.isNotEmpty() } as MutableList<Music>
-
+            _musicList.filter { it.pathway.isNotEmpty() } as MutableList<Music>
     }
 
     private suspend fun downloadfile(i: Int) {
+        _musicList[i].isLoading = true
         musicList.postValue(_musicList)
-        val response = RetrofitBuilder.apiDownload.downloadFile(_musicList[i].url)
+
+        val response = RetrofitBuilder.api.downloadFile(_musicList[i].url)
         var body = response.body()
-        Log.v("Test", "Response is " + response.code().toString() + "for " + _musicList[i].name)
+        Log.v("Test", _musicList[i].url +"  Response: " + response.code().toString())
         if (response.code() == 200 && body != null)
             writeFile(body, i)
 
+        _musicList[i].isLoading = false
+        musicList.postValue(_musicList)
 
     }
 
     private fun cleanFromDublicates() {
         var setCountries: MutableSet<String> = mutableSetOf()
         _musicList =
-            _musicList.filter { setCountries.add(it.url.substringAfterLast("/")) } as MutableList<Music>
-        Log.v("Test", _musicList.toString())
+            _musicList.filter { setCountries.add(it.url) } as MutableList<Music>
     }
 
     private fun writeFile(responseBody: ResponseBody, i: Int) {
-        Log.v("Test", "Started to write file")
         val fileName = _musicList[i].url.substringAfterLast("/")
         val pathName =
             Environment.getExternalStorageDirectory().path + "/download/" + fileName
@@ -149,11 +143,9 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun playMusic(music: Music) {
-
         mediaPlayer.stop()
         if (music.isPlaying) {
             mediaPlayer = MediaPlayer.create(context, music.pathway.toUri())
-
             mediaPlayer.start()
         }
     }

@@ -36,35 +36,30 @@ class QrScannerFragment : Fragment() {
         viewModel = ViewModelProvider(this).get(QrScanerViewModel::class.java)
     }
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.qr_scanner_fragment, container, false)
-
-        //setup observers //setup observers //setup observers
-
-        viewModel.navigation.observe(viewLifecycleOwner, { navDirection ->
-            navDirection?.let {
-
-                findNavController().navigate(navDirection)
-            }
-            //
-        })
-
+        setupObservers()
         return view
     }
 
+    private fun setupObservers() {
+        viewModel.navigation.observe(viewLifecycleOwner, { navDirection ->
+            navDirection?.let {
+                findNavController().navigate(navDirection)
+            }
+        })
 
+    }
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if(requestCode==REQUEST_CODE_PERMISSIONS && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
-        {
+        if (requestCode == REQUEST_CODE_PERMISSIONS && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
             startCamera()
         }
     }
@@ -79,13 +74,10 @@ class QrScannerFragment : Fragment() {
                 REQUEST_CODE_PERMISSIONS
             )
         }
-
-
     }
 
 
     private fun startCamera() {
-
         // Create an instance of the ProcessCameraProvider,
         // which will be used to bind the use cases to a lifecycle owner.
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
@@ -132,7 +124,7 @@ class QrScannerFragment : Fragment() {
 
 
     private fun searchBarcode(url: String) {
-        Log.e("Test", url)
+        Log.e("Test", "barcode result:$url")
         viewModel.openMusicList(url)
     }
 
@@ -153,13 +145,6 @@ class QrScannerFragment : Fragment() {
             Manifest.permission.CAMERA,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
-        private const val REQUEST_CODE_PERMISSIONS = 9
+        private const val REQUEST_CODE_PERMISSIONS = 42
     }
-
-
-//    companion object {
-//        fun newInstance() = QrScannerFragment()
-//    }
-
-
 }

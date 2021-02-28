@@ -1,7 +1,6 @@
 package com.qrmusicplayer.ui.musiclist
 
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -26,7 +25,6 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         var view = inflater.inflate(R.layout.fragment_music_list, container, false)
         setupViewModel()
         view = setupUI(view)
@@ -54,12 +52,10 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
     private fun setupObservers() {
 
         viewModel.isLoading.observe(viewLifecycleOwner, Observer {
-            if (it)
-                progressBar.visibility = View.VISIBLE
+            if (it) progressBar.visibility = View.VISIBLE
             else progressBar.visibility = View.GONE
         })
         viewModel.musicList.observe(viewLifecycleOwner, {
-            Log.v("Test", "****changeListViewData***")
             changeListViewData(it)
 
         })
@@ -71,17 +67,12 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
 
     private fun getJson() {
         val safeArgs: MusicListFragmentArgs by navArgs()
-
         val url = safeArgs.url
         viewModel.getJson(url)
     }
 
     private fun changeListViewData(music: List<Music>) {
-        if (adapter != null) {
-            Log.v("Test", "****changeListViewData inside***")
-            adapter.changeData(music)
-        }
-
+        if (adapter != null) adapter.changeData(music)
     }
 
     private fun setupViewModel() {
@@ -89,10 +80,7 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
     }
 
     override fun onClickItem(music: Music) {
-        adapter.notifyDataSetChanged()
         viewModel.playMusic(music)
-
-
     }
 
 

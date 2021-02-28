@@ -14,7 +14,6 @@ class BarcodeAnalizer(private val barcodeListener: BarcodeListener) : ImageAnaly
 
     @SuppressLint("UnsafeExperimentalUsageError")
     override fun analyze(imageProxy: ImageProxy) {
-
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)

@@ -14,7 +14,6 @@ class MusicAdapter(
     private var onClickListener: OnClickListener
 ) :
     RecyclerView.Adapter<MusicAdapter.MyViewHolder>() {
-    //private val musicSet:Set<>
    private var currentPlayingMusic:Music= Music()
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -27,9 +26,7 @@ class MusicAdapter(
                         currentPlayingMusic = music
                     }
                     else music.isPlaying =false
-
-
-
+                    notifyDataSetChanged()
                     onClickListener.onClickItem(music)
                 }
 
@@ -41,14 +38,12 @@ class MusicAdapter(
 
                 if(music.isPlaying) item_imageView.visibility=View.VISIBLE
                 else item_imageView.visibility=View.GONE
-
             }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder =
         MyViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_view, parent, false))
-
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         holder.bind(musicList[position], onClickListener, position)
@@ -57,15 +52,12 @@ class MusicAdapter(
     override fun getItemCount(): Int = musicList.size
 
     fun changeData(musicList: List<Music>) {
-        Log.v("Test", musicList.toString())
         this.musicList.apply {
             clear()
             addAll(musicList)
         }
-        Log.v("Test", this.musicList.toString())
         notifyDataSetChanged()
     }
-
 
     interface OnClickListener {
         fun onClickItem(music: Music)

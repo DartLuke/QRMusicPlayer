@@ -63,6 +63,10 @@ class MusicListFragment : Fragment(), MusicAdapter.OnClickListener {
             Toast.makeText(activity, it, Toast.LENGTH_LONG).show()
         })
 
+        viewModel.errorLoading.observe(viewLifecycleOwner,{
+            if(it) {requireActivity().onBackPressed()}
+        })
+
     }
 
     private fun getJson() {

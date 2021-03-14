@@ -6,6 +6,7 @@ import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.qrmusicplayer.api.RetrofitBuilder
@@ -18,25 +19,37 @@ import java.io.InputStream
 import java.io.OutputStream
 
 class MusicListViewModel(application: Application) : AndroidViewModel(application) {
+
+
+    val errorMessage: LiveData<String> get()=_errorMessage
+    private var _errorMessage = MutableLiveData<String>()
+
+     val isLoading : LiveData<Boolean> get()=_isLoading
+    private val _isLoading = MutableLiveData<Boolean>()
+
+    val musicList : LiveData<List<Music>> get()=musicListLiveData
+    private  val musicListLiveData = MutableLiveData<List<Music>>()
     lateinit var _musicList: MutableList<Music>
-    val errorMessage = MutableLiveData<String>()
-    val isLoading = MutableLiveData<Boolean>()
-    var musicList = MutableLiveData<List<Music>>()
+
+    val errorLoading : LiveData<Boolean> get()=_errorLoading
+    private  val _errorLoading = MutableLiveData<Boolean>()
+
 
     private val context = getApplication<Application>().applicationContext
     private var mediaPlayer: MediaPlayer = MediaPlayer()
 
     fun getJson(url: String) {
-        isLoading.value = true
+        _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _musicList = RetrofitBuilder.api.getJson(url) as MutableList<Music>
-                isLoading.postValue(false)
+                _isLoading.postValue(false)
                 downloadAllFiles()
             } catch (exp: Exception) {
-                isLoading.postValue(false)
-                errorMessage.postValue("Error: $errorMessage")
-                Log.e("Test", exp.message)
+                _isLoading.postValue(false)
+                _errorMessage.postValue("Link is incorect Error: $_errorMessage")
+                _errorLoading.postValue(true)
+                exp.message?.let { Log.e("Test", it) }
             }
         }
     }
@@ -50,18 +63,23 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
                     Log.v("Test", "***Download started***")
                     for (i in _musicList.indices) {
                         list.add(async {
-                            downloadfile(i)
+                            try {
+                                downloadfile(i)
+                            } catch (exp: Exception) {
+                                _errorMessage.postValue("Error: $_errorMessage")
+                              //  Log.e("Test", exp.message)
+                            }
                         })
                     }
                     list.awaitAll()
                     Log.v("Test", "***Download complete***")
-                    isLoading.postValue(false)
+                    _isLoading.postValue(false)
                     cleanListFromEmptyFiles()
-                    musicList.postValue(_musicList)
+                    musicListLiveData.postValue(_musicList)
                 } catch (exp: Exception) {
-                    errorMessage.postValue("Error: $errorMessage")
-                    isLoading.postValue(false)
-                    Log.e("Test", exp.message)
+                    _errorMessage.postValue("Error: $_errorMessage")
+                    _isLoading.postValue(false)
+                    exp.message?.let { Log.e("Test", it) }
                 }
             }
         }
@@ -74,16 +92,16 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
 
     private suspend fun downloadfile(i: Int) {
         _musicList[i].isLoading = true
-        musicList.postValue(_musicList)
+        musicListLiveData.postValue(_musicList)
 
         val response = RetrofitBuilder.api.downloadFile(_musicList[i].url)
         var body = response.body()
-        Log.v("Test", _musicList[i].url +"  Response: " + response.code().toString())
+        Log.v("Test", _musicList[i].url + "  Response: " + response.code().toString())
         if (response.code() == 200 && body != null)
             writeFile(body, i)
 
         _musicList[i].isLoading = false
-        musicList.postValue(_musicList)
+        musicListLiveData.postValue(_musicList)
 
     }
 
@@ -132,8 +150,8 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
             _musicList[i].pathway = pathName
             _musicList[i].fileName = fileName
         } catch (exp: Exception) {
-            errorMessage.postValue("Error: $errorMessage")
-            Log.e("Test", exp.message)
+            _errorMessage.postValue("Error: $_errorMessage")
+            exp.message?.let { Log.e("Test", it) }
 
         } finally {
             inputStream?.close()
@@ -143,10 +161,19 @@ class MusicListViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun playMusic(music: Music) {
+        if (music.pathway.isEmpty()) return
+        try {
+
+
         mediaPlayer.stop()
         if (music.isPlaying) {
             mediaPlayer = MediaPlayer.create(context, music.pathway.toUri())
             mediaPlayer.start()
+        }
+
+    }   catch(exp: Exception)
+        {
+
         }
     }
 

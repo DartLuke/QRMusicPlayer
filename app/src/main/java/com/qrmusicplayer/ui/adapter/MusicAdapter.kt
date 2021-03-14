@@ -20,14 +20,15 @@ class MusicAdapter(
         fun bind(music: Music, onClickListener: OnClickListener, position: Int) {
             itemView.apply {
                 itemView.setOnClickListener {
-                    if(!music.isPlaying) {
-                        currentPlayingMusic.isPlaying=false
-                        music.isPlaying = true
-                        currentPlayingMusic = music
-                    }
-                    else music.isPlaying =false
-                    notifyDataSetChanged()
-                    onClickListener.onClickItem(music)
+                  if(!(music.isLoading || music.pathway.isEmpty())) {
+                      if (!music.isPlaying) {
+                          currentPlayingMusic.isPlaying = false
+                          music.isPlaying = true
+                          currentPlayingMusic = music
+                      } else music.isPlaying = false
+                      notifyDataSetChanged()
+                      onClickListener.onClickItem(music)
+                  }
                 }
 
                 item_music_name.text = music.name

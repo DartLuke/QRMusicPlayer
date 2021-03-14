@@ -11,13 +11,13 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.qrmusicplayer.utils.BarcodeAnalizer
 import com.qrmusicplayer.R
-import kotlinx.android.synthetic.main.qr_scanner_fragment.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,11 +29,13 @@ class QrScannerFragment : Fragment() {
     private var processingBarcode = AtomicBoolean(false)
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var viewModel: QrScanerViewModel
+    private lateinit var camera: PreviewView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        cameraExecutor = Executors.newSingleThreadExecutor()
+
         viewModel = ViewModelProvider(this).get(QrScanerViewModel::class.java)
+
     }
 
     override fun onCreateView(
@@ -41,6 +43,9 @@ class QrScannerFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.qr_scanner_fragment, container, false)
+
+        cameraExecutor = Executors.newSingleThreadExecutor()
+        camera = view.findViewById(R.id.fragment_camera)
         setupObservers()
         return view
     }
@@ -48,11 +53,15 @@ class QrScannerFragment : Fragment() {
     private fun setupObservers() {
         viewModel.navigation.observe(viewLifecycleOwner, { navDirection ->
             navDirection?.let {
-                findNavController().navigate(navDirection)
+                if (it != null) {
+                    findNavController().navigate(navDirection)
+                    viewModel.cleanNavigation()
+                }
             }
         })
 
     }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -78,9 +87,12 @@ class QrScannerFragment : Fragment() {
 
 
     private fun startCamera() {
+        Log.v("Test", "camera start")
         // Create an instance of the ProcessCameraProvider,
         // which will be used to bind the use cases to a lifecycle owner.
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+
 
         // Add a listener to the cameraProviderFuture.
         // The first argument is a Runnable, which will be where the magic actually happens.
@@ -93,7 +105,7 @@ class QrScannerFragment : Fragment() {
             // and set it on the preview instance.
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(
-                    fragment_camera.surfaceProvider
+                    camera.surfaceProvider
                 )
             }
             // Setup the ImageAnalyzer for the ImageAnalysis use case
@@ -102,9 +114,7 @@ class QrScannerFragment : Fragment() {
                 .also {
                     it.setAnalyzer(cameraExecutor, BarcodeAnalizer { barcode ->
                         if (processingBarcode.compareAndSet(false, true)) {
-
                             searchBarcode(barcode)
-
                         }
                     })
                 }
@@ -127,7 +137,10 @@ class QrScannerFragment : Fragment() {
         Log.e("Test", "barcode result:$url")
         viewModel.openMusicList(url)
     }
-
+    override fun onResume() {
+        super.onResume()
+        processingBarcode.set(false)
+    }
 
     override fun onDestroy() {
         cameraExecutor.shutdown()

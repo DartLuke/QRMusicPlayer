@@ -23,14 +23,10 @@ class StartFragment : Fragment() {
     ): View? {
         var view = inflater.inflate(R.layout.fragment_start, container, false)
         view.button_start.setOnClickListener {
-          //  temporyHardCode()
+         //  temporyHardCode()
             startQRfragment()
         }
         return view
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
     }
 
     private fun startQRfragment() {
@@ -63,7 +59,7 @@ class StartFragment : Fragment() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-            temporyHardCode()
+            startQRfragment()
         } else {
             val message = "App doesn't have necessary"
             Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
